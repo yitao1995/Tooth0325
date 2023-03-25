@@ -17,7 +17,7 @@ class PartDataset(data.Dataset):
         self.coloboma = []
         self.complete = []
         self.rest = []
-
+#//Test
 
     def __getitem__(self, index):
 
