@@ -20,12 +20,12 @@ if __name__ == '__main__':
     parser.add_argument('--dataroot', default='dataset/train', help='path to dataset')
     parser.add_argument('--workers', type=int, default=2, help='number of data loading workers')
     parser.add_argument('--batchSize', type=int, default=2, help='input batch size')
-    parser.add_argument('--pnum', type=int, default=10240, help='the point number of a sample')
+    parser.add_argument('--pnum', type=int, default=1024*4,help='the point number of a sample')
     parser.add_argument('--crop_point_num', type=int, default=1024, help='0 means do not use else use with this weight')
     parser.add_argument('--nc', type=int, default=3)
     parser.add_argument('--niter', type=int, default=201, help='number of epochs to train for')
     parser.add_argument('--weight_decay', type=float, default=0.001)
-    parser.add_argument('--learning_rate', default=0.0002, type=float, help='learning rate in training')
+    parser.add_argument('--learning_rate', default=0.02, type=float, help='learning rate in training')
     parser.add_argument('--beta1', type=float, default=0.9, help='beta1 for adam. default=0.9')
     parser.add_argument('--cuda', type=bool, default=False, help='enables cuda')
     parser.add_argument('--ngpu', type=int, default=2, help='number of GPUs to use')
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     parser.add_argument('--manualSeed', type=int, help='manual seed')
     parser.add_argument('--drop', type=float, default=0.2)
     parser.add_argument('--num_scales', type=int, default=3, help='number of scales')
-    parser.add_argument('--point_scales_list', type=list, default=[10240, 1024, 512],
+    parser.add_argument('--point_scales_list', type=list, default=[1024*4, 1024, 512],
                         help='number of points in each scales')
     parser.add_argument('--each_scales_size', type=int, default=1, help='each scales size')
     parser.add_argument('--wtl2', type=float, default=0.95, help='0 means do not use else use with this weight')
@@ -125,9 +125,9 @@ if __name__ == '__main__':
     criterion_PointLoss = PointLoss().to(device)
 
     # setup optimizer
-    optimizerD = torch.optim.Adam(point_netD.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-05,
+    optimizerD = torch.optim.Adam(point_netD.parameters(), lr=opt.learning_rate, betas=(0.9, 0.999), eps=1e-05,
                                   weight_decay=opt.weight_decay)
-    optimizerG = torch.optim.Adam(point_netG.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-05,
+    optimizerG = torch.optim.Adam(point_netG.parameters(), lr=opt.learning_rate, betas=(0.9, 0.999), eps=1e-05,
                                   weight_decay=opt.weight_decay)
     schedulerD = torch.optim.lr_scheduler.StepLR(optimizerD, step_size=40, gamma=0.2)
     schedulerG = torch.optim.lr_scheduler.StepLR(optimizerG, step_size=40, gamma=0.2)
@@ -150,7 +150,7 @@ if __name__ == '__main__':
                 alpha2 = 0.2
             elif epoch < 80:
                 alpha1 = 0.05
-                alpha2 = 0.1
+                alpha2 = 0.01
             else:
                 alpha1 = 0.01
                 alpha2 = 0.02
@@ -193,9 +193,9 @@ if __name__ == '__main__':
                 # ======================================
                 real_point, target, coloboma, rest = data  # 点云坐标(b,2048,3). 点云类别(b,1) (Airplane or Mug).
                 # ======================================
-                real_point = torch.unsqueeze(real_point, 1).to(device)  # (b,1,2048,3) 原始完整点云坐标数据
-                real_center = torch.unsqueeze(coloboma, 1).to(device)  # (b,1,512,3) 被裁剪下来的点云
-                input_cropped1 = torch.unsqueeze(rest, 1).to(device)  # (b,1,2048,3) 被裁剪后的点云
+                real_point = torch.unsqueeze(real_point, 1).to(device)  # (b,1,10240,3) 原始完整点云坐标数据
+                real_center = torch.unsqueeze(coloboma, 1).to(device)  # (b,1,1024,3) 被裁剪下来的点云
+                input_cropped1 = torch.unsqueeze(rest, 1).to(device)  # (b,1,10240,3) 被裁剪后的点云
                 label = label.to(device)  # (2,1) 1是真实，0是生成
                 ############################
                 # (1) data prepare
@@ -205,11 +205,11 @@ if __name__ == '__main__':
                 real_center = Variable(real_center, requires_grad=True)
                 real_center = torch.squeeze(real_center, 1)  # (b,1,512,3) -> (b,512,3)
                 # scale 1
-                real_center_key1_idx = utils.farthest_point_sample(real_center, 64, RAN=False)  # 提取64个点作为骨架
+                real_center_key1_idx = utils.farthest_point_sample(real_center, 256, RAN=False)  # 提取64个点作为骨架
                 real_center_key1 = utils.index_points(real_center, real_center_key1_idx)
                 real_center_key1 = Variable(real_center_key1, requires_grad=True)
                 # scale 2
-                real_center_key2_idx = utils.farthest_point_sample(real_center, 128, RAN=True)  # 提取128个点作为骨架点
+                real_center_key2_idx = utils.farthest_point_sample(real_center, 512, RAN=True)  # 提取128个点作为骨架点
                 real_center_key2 = utils.index_points(real_center, real_center_key2_idx)  # 被裁剪下来的点云
                 real_center_key2 = Variable(real_center_key2, requires_grad=True)
                 # 被裁剪后的点云
@@ -271,6 +271,10 @@ if __name__ == '__main__':
                 f = open('loss_PFNet.txt', 'a')
                 f.write('\n' + '[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f / %.4f / %.4f /%.4f'
                         % (epoch, opt.niter, i, len(dataloader),
+                           errD.data, errG_D.data, errG_l2, errG, CD_LOSS))
+                f2 = open('show_Loss.txt', 'a')
+                f2.write('\n' + ' %d %d %.4f %.4f %.4f %.4f %.4f'
+                        % (epoch, i,
                            errD.data, errG_D.data, errG_l2, errG, CD_LOSS))
 
                 if i % 10 == 0:

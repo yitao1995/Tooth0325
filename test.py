@@ -15,11 +15,16 @@ import glob
     # train_ids = set([str(d.split('/')[3]) ])
 # print(data[0])
 # print(data[1])
-# coloboma = [[1, 7, 1, 1],
-#             [2, 8, 0, 1],
-#             [3, 9, 0, 0],
-#             [4, 0, 1, 0]
-#             ]
+coloboma = [[1, 7, 1, 1],
+            [2, 8, 0, 2],
+            [3, 9, 0, 3],
+            [4, 0, 1, 4]
+            ]
+coloboma = np.asarray(coloboma).astype(np.float32) #完整
+choice = np.random.choice(len(coloboma), 2, replace=False)
+
+point_set_whole = coloboma[choice, :]
+print(point_set_whole)
 # complete = []
 # rest = []
 # point_set = np.loadtxt(catfile)  # .astype(np.float32)
@@ -56,18 +61,18 @@ import glob
 
 # print(len(point_set))
 # print(len(rest))
-root = 'C:/Users/hs/Desktop/pointcloud/dataset/'
-imgdirs = glob.glob(root + '*')
-plist=[]
-clist=[]
-rlist=[]
-for i in imgdirs:
-    point_set = np.loadtxt(i)  # .astype(np.float32)
-    print(i)
-    point_set = np.asarray(point_set).astype(np.float32)
-    plist.append(point_set)
-for i,j in enumerate(plist):
-    clist.append(j[j[:, 3] == 0][:, :3])
-    rlist.append(j[j[:, 3] == 1][:, :3])
-for j in plist:
-    print(j)
+# root = 'C:/Users/hs/Desktop/pointcloud/dataset/'
+# imgdirs = glob.glob(root + '*')
+# plist=[]
+# clist=[]
+# rlist=[]
+# for i in imgdirs:
+#     point_set = np.loadtxt(i)  # .astype(np.float32)
+#     print(i)
+#     point_set = np.asarray(point_set).astype(np.float32)
+#     plist.append(point_set)
+# for i,j in enumerate(plist):
+#     clist.append(j[j[:, 3] == 0][:, :3])
+#     rlist.append(j[j[:, 3] == 1][:, :3])
+# for j in plist:
+#     print(j)

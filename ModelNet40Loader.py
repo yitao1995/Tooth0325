@@ -13,7 +13,7 @@ import torch
 import torch.utils.data as data
 import numpy as np
 import os
-import h5py
+#import h5py
 import subprocess
 import shlex
 import utils
