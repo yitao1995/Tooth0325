@@ -39,7 +39,7 @@ parser.add_argument('--learning_rate', default=0.0002, type=float, help='learnin
 parser.add_argument('--beta1', type=float, default=0.9, help='beta1 for adam. default=0.9')
 parser.add_argument('--cuda', type = bool, default = False, help='enables cuda')
 parser.add_argument('--ngpu', type=int, default=2, help='number of GPUs to use')
-parser.add_argument('--netG', default='Train_MRCMLP/point_netG100.pth', help="path to netG (to continue training)")
+parser.add_argument('--netG', default='Train_MRCMLP/point_netG.pth', help="path to netG (to continue training)")
 parser.add_argument('--infile',type = str, default = 'Test_one/crop1.csv')
 parser.add_argument('--infile_real',type = str, default = 'Test_one/real1.csv')
 parser.add_argument('--netD', default='', help="path to netD (to continue training)")
