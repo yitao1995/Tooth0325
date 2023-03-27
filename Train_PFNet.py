@@ -20,12 +20,12 @@ if __name__ == '__main__':
     parser.add_argument('--dataroot', default='dataset/train', help='path to dataset')
     parser.add_argument('--workers', type=int, default=2, help='number of data loading workers')
     parser.add_argument('--batchSize', type=int, default=2, help='input batch size')
-    parser.add_argument('--pnum', type=int, default=1024*4,help='the point number of a sample')
-    parser.add_argument('--crop_point_num', type=int, default=1024, help='0 means do not use else use with this weight')
+    parser.add_argument('--pnum', type=int, default=2048, help='the point number of a sample')
+    parser.add_argument('--crop_point_num', type=int, default=512, help='0 means do not use else use with this weight')
     parser.add_argument('--nc', type=int, default=3)
-    parser.add_argument('--niter', type=int, default=201, help='number of epochs to train for')
+    parser.add_argument('--niter', type=int, default=801, help='number of epochs to train for')
     parser.add_argument('--weight_decay', type=float, default=0.001)
-    parser.add_argument('--learning_rate', default=0.02, type=float, help='learning rate in training')
+    parser.add_argument('--learning_rate', default=0.0002, type=float, help='learning rate in training')
     parser.add_argument('--beta1', type=float, default=0.9, help='beta1 for adam. default=0.9')
     parser.add_argument('--cuda', type=bool, default=False, help='enables cuda')
     parser.add_argument('--ngpu', type=int, default=2, help='number of GPUs to use')
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     parser.add_argument('--manualSeed', type=int, help='manual seed')
     parser.add_argument('--drop', type=float, default=0.2)
     parser.add_argument('--num_scales', type=int, default=3, help='number of scales')
-    parser.add_argument('--point_scales_list', type=list, default=[1024*4, 1024, 512],
+    parser.add_argument('--point_scales_list', type=list, default=[1024 * 2, 1024, 512],
                         help='number of points in each scales')
     parser.add_argument('--each_scales_size', type=int, default=1, help='each scales size')
     parser.add_argument('--wtl2', type=float, default=0.95, help='0 means do not use else use with this weight')
@@ -118,8 +118,8 @@ if __name__ == '__main__':
     #                                         shuffle=True,num_workers = int(opt.workers))
 
     # pointcls_net.apply(weights_init)
-    print(point_netG)
-    print(point_netD)
+    #print(point_netG)
+    #print(point_netD)
 
     criterion = torch.nn.BCEWithLogitsLoss().to(device)
     criterion_PointLoss = PointLoss().to(device)
@@ -146,15 +146,17 @@ if __name__ == '__main__':
     if opt.D_choose == 1:
         for epoch in range(resume_epoch, opt.niter):
             if epoch < 30:
-                alpha1 = 0.1
-                alpha2 = 0.2
-            elif epoch < 80:
-                alpha1 = 0.05
-                alpha2 = 0.01
-            else:
                 alpha1 = 0.01
                 alpha2 = 0.02
-
+            elif epoch < 80:
+                alpha1 = 0.05
+                alpha2 = 0.1
+            else:
+                alpha1 = 0.1
+                alpha2 = 0.2
+            print("epoch: is "+str(epoch))
+            print("alpha1: is "+str(alpha1))
+            print("alpha2: is "+str(alpha2))
             for i, data in enumerate(dataloader, 0):
 
                 real_point, target, coloboma, test = data  # 点云坐标(b,2048,3). 点云类别(b,1) (Airplane or Mug).
@@ -203,13 +205,13 @@ if __name__ == '__main__':
                 # 被裁剪下来的点云
                 # scale 0
                 real_center = Variable(real_center, requires_grad=True)
-                real_center = torch.squeeze(real_center, 1)  # (b,1,512,3) -> (b,512,3)
+                real_center = torch.squeeze(real_center, 1)  # (b,1,1024,3) -> (b,1024,3)
                 # scale 1
-                real_center_key1_idx = utils.farthest_point_sample(real_center, 256, RAN=False)  # 提取64个点作为骨架
+                real_center_key1_idx = utils.farthest_point_sample(real_center, 64, RAN=False)  # 提取64个点作为骨架
                 real_center_key1 = utils.index_points(real_center, real_center_key1_idx)
                 real_center_key1 = Variable(real_center_key1, requires_grad=True)
                 # scale 2
-                real_center_key2_idx = utils.farthest_point_sample(real_center, 512, RAN=True)  # 提取128个点作为骨架点
+                real_center_key2_idx = utils.farthest_point_sample(real_center, 128, RAN=True)  # 提取128个点作为骨架点
                 real_center_key2 = utils.index_points(real_center, real_center_key2_idx)  # 被裁剪下来的点云
                 real_center_key2 = Variable(real_center_key2, requires_grad=True)
                 # 被裁剪后的点云
@@ -274,8 +276,8 @@ if __name__ == '__main__':
                            errD.data, errG_D.data, errG_l2, errG, CD_LOSS))
                 f2 = open('show_Loss.txt', 'a')
                 f2.write('\n' + ' %d %d %.4f %.4f %.4f %.4f %.4f'
-                        % (epoch, i,
-                           errD.data, errG_D.data, errG_l2, errG, CD_LOSS))
+                         % (epoch, i,
+                            errD.data, errG_D.data, errG_l2, errG, CD_LOSS))
 
                 if i % 10 == 0:
                     print('After, ', i, '-th batch')
@@ -331,7 +333,7 @@ if __name__ == '__main__':
                 f.close()
             schedulerD.step()
             schedulerG.step()
-            if epoch % 10 == 0:
+            if epoch % 20 == 0:
                 torch.save({'epoch': epoch + 1,
                             'state_dict': point_netG.state_dict()},
                            'Trained_Model/point_netG' + str(epoch) + '.pth')

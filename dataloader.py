@@ -19,11 +19,11 @@ class PartDataset(data.Dataset):
         self.rest = []
 
     def __getitem__(self, index):
-        RandomPoint = 1024*4
-        pointCut = 1024
+        RandomPoint = 2048
+        pointCut = 512
         point_set_whole = np.loadtxt(self.rootdirs[index])  # .astype(np.float32)#序列
         point_set_whole = point_set_whole[:, :4]  # 前四列
-        index2 = np.arange(0, len(point_set_whole), 0).reshape(len(point_set_whole), 1)
+        index2 = np.arange(0, len(point_set_whole), 1).reshape(len(point_set_whole), 1)
         point_set_whole = np.asarray(point_set_whole).astype(np.float32)  # 完整
         result = np.concatenate((point_set_whole, index2), axis=1)  # 加序列
 

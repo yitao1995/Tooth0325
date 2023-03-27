@@ -216,7 +216,7 @@ class _netlocalD(nn.Module):
         x_128 = torch.squeeze(self.maxpool(x_128))
         x_256 = torch.squeeze(self.maxpool(x_256))
         Layers = [x_256, x_128, x_64]
-        x = torch.cat(Layers, dim=1)
+        x = torch.cat(Layers, 1)
         x = F.relu(self.bn_1(self.fc1(x)))
         x = F.relu(self.bn_2(self.fc2(x)))
         x = F.relu(self.bn_3(self.fc3(x)))
@@ -225,10 +225,10 @@ class _netlocalD(nn.Module):
 
 
 if __name__ == '__main__':
-    input1 = torch.randn(64, 8192, 3)
-    input2 = torch.randn(64, 1024, 3)
-    input3 = torch.randn(64, 512, 3)
+    input1 = torch.randn(64, 2048, 3)
+    input2 = torch.randn(64, 512, 3)
+    input3 = torch.randn(64, 256, 3)
     input_ = [input1, input2, input3]
-    netG = _netG(3, 1, [8192, 1024, 512], 1024)
+    netG = _netG(3, 1, [2048, 512, 256], 1024)
     output = netG(input_)
     print(output)
